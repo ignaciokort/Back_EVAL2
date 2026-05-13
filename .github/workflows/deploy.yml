@@ -7,7 +7,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Deploy via SSH
@@ -24,7 +24,6 @@ jobs:
             docker build -t back-app .
             docker stop back-container || true
             docker rm back-container || true
-            # Corremos el contenedor con las variables del .env
             docker run -d --name back-container -p 3000:3000 \
               -e PORT=3000 \
               -e DB_HOST=${{ secrets.DB_HOST }} \
