@@ -1,0 +1,32 @@
+name: Deploy Backend
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_BACK_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo chmod 666 /var/run/docker.sock
+            sudo rm -rf Back_Eval2
+            git clone https://github.com/ignaciokort/Back_Eval2.git
+            cd Back_Eval2
+            docker build -t back-app .
+            docker stop back-container || true
+            docker rm back-container || true
+            # Aquí pasamos los datos para conectar con la base de datos
+            docker run -d --name back-container -p 5000:5000 \
+              -e DB_HOST=${{ secrets.DB_HOST }} \
+              -e DB_USER=root \
+              -e DB_PASSWORD=admin \
+              back-app
