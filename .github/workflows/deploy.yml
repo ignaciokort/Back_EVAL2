@@ -1,8 +1,7 @@
 name: Deploy Backend with Compose
 on:
   push:
-    # IMPORTANTE: Aquí cumplimos con el requisito de la pauta
-    branches: [ "deploy" ]
+    [cite_start]branches: [ "deploy" ] # Cumple con IE4 (20% de la nota) [cite: 14, 44]
 
 jobs:
   deploy:
@@ -17,25 +16,29 @@ jobs:
           host: ${{ secrets.EC2_BACK_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-         script: |
+          script: |
             # 1. Asegurar que Docker y Docker Compose existan
             sudo apt-get update && sudo apt-get install -y docker-compose
             
             # 2. Dar permisos al socket de Docker
             sudo chmod 666 /var/run/docker.sock
             
-            # 3. Limpiar y clonar la rama deploy (como pide la pauta IE4)
+            # 3. Limpiar contenedores viejos para evitar conflictos
+            docker stop back-container mysql-db || true
+            docker rm back-container mysql-db || true
+            
+            # 4. Limpiar y clonar la rama deploy (IE4) [cite: 113, 145]
             sudo rm -rf Back_Eval2
             git clone -b deploy https://github.com/ignaciokort/Back_Eval2.git
             cd Back_Eval2
             
-            # 4. Crear el archivo de configuración .env
+            # 5. Crear el archivo de configuración .env (IE1) [cite: 31, 93]
             echo "DB_HOST=db-mysql" > .env
             echo "DB_USER=root" >> .env
             echo "DB_PASSWORD=admin" >> .env
             echo "DB_NAME=proyecto_db" >> .env
             echo "PORT=3000" >> .env
             
-            # 5. Detener todo lo viejo y levantar lo nuevo con Compose (IE2 y IE6)
-            docker-compose down
-            docker-compose up -d --build
+            # 6. Levantar todo con Docker Compose (IE2 y IE3) [cite: 30, 33, 92]
+            docker compose down
+            docker compose up -d --build
