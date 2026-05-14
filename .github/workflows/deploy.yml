@@ -1,7 +1,8 @@
-name: Deploy Backend
+name: Deploy Backend with Compose
 on:
   push:
-    branches: [ "main" ]
+    # Cumplimos con el requisito de la pauta: usar la rama deploy
+    branches: [ "deploy" ]
 
 jobs:
   deploy:
@@ -17,17 +18,23 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # 1. Dar permisos a Docker
             sudo chmod 666 /var/run/docker.sock
+            
+            # 2. Limpiar carpeta anterior y clonar la rama deploy
             sudo rm -rf Back_Eval2
-            git clone https://github.com/ignaciokort/Back_Eval2.git
+            git clone -b deploy https://github.com/ignaciokort/Back_Eval2.git
             cd Back_Eval2
-            docker build -t back-app .
-            docker stop back-container || true
-            docker rm back-container || true
-            docker run -d --name back-container -p 3000:3000 \
-              -e PORT=3000 \
-              -e DB_HOST=${{ secrets.DB_HOST }} \
-              -e DB_USER=root \
-              -e DB_PASSWORD=admin \
-              -e DB_NAME=proyecto_db \
-              back-app
+            
+            # 3. Crear archivo .env al vuelo para que el Compose lo use
+            # Esto es más seguro y profesional
+            echo "DB_HOST=${{ secrets.DB_HOST }}" > .env
+            echo "DB_USER=root" >> .env
+            echo "DB_PASSWORD=admin" >> .env
+            echo "DB_NAME=proyecto_db" >> .env
+            echo "PORT=3000" >> .env
+            
+            # 4. Levantar todo con Docker Compose
+            # -d: segundo plano, --build: reconstruye la imagen del back
+            docker-compose down
+            docker-compose up -d --build
