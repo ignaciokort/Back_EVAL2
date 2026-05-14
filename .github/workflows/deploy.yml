@@ -17,23 +17,25 @@ jobs:
           host: ${{ secrets.EC2_BACK_IP }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Dar permisos a Docker
+         script: |
+            # 1. Asegurar que Docker y Docker Compose existan
+            sudo apt-get update && sudo apt-get install -y docker-compose
+            
+            # 2. Dar permisos al socket de Docker
             sudo chmod 666 /var/run/docker.sock
             
-            # Limpiar y clonar la rama específica 'deploy'
+            # 3. Limpiar y clonar la rama deploy (como pide la pauta IE4)
             sudo rm -rf Back_Eval2
             git clone -b deploy https://github.com/ignaciokort/Back_Eval2.git
             cd Back_Eval2
             
-            # Crear el archivo de variables para que el backend sepa dónde está la DB
+            # 4. Crear el archivo de configuración .env
             echo "DB_HOST=db-mysql" > .env
             echo "DB_USER=root" >> .env
             echo "DB_PASSWORD=admin" >> .env
             echo "DB_NAME=proyecto_db" >> .env
             echo "PORT=3000" >> .env
             
-            # Levantar todo usando el docker-compose.yml
-            # Esto levanta la API y la Base de Datos al mismo tiempo
+            # 5. Detener todo lo viejo y levantar lo nuevo con Compose (IE2 y IE6)
             docker-compose down
             docker-compose up -d --build
